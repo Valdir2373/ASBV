@@ -76,6 +76,4 @@ export class MachinesService {
     machine.ws.send(JSON.stringify(message));
     return "success";
   }
-
-  // getAllMachines() {}
 }
