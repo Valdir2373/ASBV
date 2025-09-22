@@ -17,4 +17,9 @@ export interface IMiddlewareManagerRoutes {
     path: string,
     ...handlers: IMiddlewareHandler[]
   ): void;
+  registerAudioUploadRoute(
+    methodHTTP: HttpMethods,
+    path: string,
+    ...handlers: IMiddlewareHandler[]
+  ): void;
 }

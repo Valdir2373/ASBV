@@ -15,7 +15,7 @@ export class ClientController {
 
       res.json(machines);
     });
-    this.server.registerRouterToClient(
+    this.server.registerAudioUploadRoute(
       "post",
       "/message",
       this.sendMessage.bind(this)
@@ -23,15 +23,34 @@ export class ClientController {
   }
   async sendMessage(req: any, res: any) {
     const { message, key, name } = req.body;
-    const sendMessageToMachine = await this.serviceMachines.sendMessage(
+
+    let parsedMessage = message;
+    if (typeof message === "string") {
+      try {
+        parsedMessage = JSON.parse(message);
+      } catch (e) {
+        return res.status(400).send("message inválida");
+      }
+    }
+
+    if (req.file) {
+      console.log(
+        "Áudio recebido:",
+        req.file.originalname,
+        req.file.size,
+        "bytes"
+      );
+    }
+
+    const result = await this.serviceMachines.sendMessage(
       key,
-      message,
+      parsedMessage,
       name
     );
-    if (!sendMessageToMachine) return res.send("não enviado");
 
-    // if (machine) machine.ws.send(message);
-    // else return res.send({ message: "erro: maquina not found" });
+    if (!result) {
+      return res.status(404).send("não enviado");
+    }
 
     res.send("enviado");
   }
