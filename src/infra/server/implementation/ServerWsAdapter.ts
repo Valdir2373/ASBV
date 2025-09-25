@@ -5,6 +5,10 @@ import { Server } from "http";
 
 class WsAdapter implements IWS {
   constructor(private ws: WebSocket) {}
+  close(code?: number, reason?: string): void {
+    this.ws.close(code, reason);
+  }
+  addEventListener: any;
   on(
     event: "message" | "close" | "error",
     listener: (...args: any[]) => void
