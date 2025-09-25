@@ -15,11 +15,7 @@ export class ClientController {
 
       res.json(machines);
     });
-    this.server.registerAudioUploadRoute(
-      "post",
-      "/message",
-      this.sendMessage.bind(this)
-    );
+    this.server.registerRouter("post", "/message", this.sendMessage.bind(this));
   }
   async sendMessage(req: any, res: any) {
     const { message, key, name } = req.body;

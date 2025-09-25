@@ -33,28 +33,4 @@ export class MiddlewareAdapter implements IMiddlewareManagerRoutes {
   ): void {
     this.server.registerFileUploadRouter(methodHTTP, path, ...handlers);
   }
-
-  // ✅ Método corrigido: usa registerRawUploadRoute
-  registerAudioUploadRoute(
-    methodHTTP: HttpMethods,
-    path: string,
-    ...handlers: IMiddlewareHandler[]
-  ): void {
-    if (!(this.server as any).multerAudioMiddleware) {
-      throw new Error(
-        "Servidor não possui middleware 'multerAudioMiddleware'. Configure-o primeiro."
-      );
-    }
-
-    // ✅ Usa o novo método que aplica multer ANTES do wrap
-    (this.server as any).registerRawUploadRoute(
-      methodHTTP,
-      path,
-      (this.server as any).multerAudioMiddleware,
-      ...handlers.map((handler) => (req: any, res: any, next: any) => {
-        // Converte para assinatura esperada pelo wrapHandlerRaw
-        return handler(req, res, next);
-      })
-    );
-  }
 }
