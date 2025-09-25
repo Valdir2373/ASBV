@@ -6,6 +6,12 @@ export class MachineRepository implements IMachineRepository {
   private readonly collectionName = "machines";
 
   constructor(private dataAccess: IDataAccess) {}
+  async delete(key: string, name: string): Promise<void> {
+    await this.dataAccess.remove(this.collectionName, {
+      keyUser: key,
+      name: name,
+    });
+  }
 
   async saveMachine(machineEntitie: MachineEntitie): Promise<MachineEntitie> {
     const newMachine = new MachineEntitie(

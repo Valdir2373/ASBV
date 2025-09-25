@@ -18,25 +18,57 @@ export class MachinesService {
     );
   }
 
+  // MachinesService.ts — substitua seu método handleMaquinaMessage por este:
+
   async handleMaquinaMessage(ws: IWS, data: IMachineMessage) {
+    const { key, name } = data;
+
+    if (!name || !key) {
+      console.error("Mensagem de máquina inválida.");
+      ws.send(JSON.stringify({ error: "Dados de máquina incompletos." }));
+      return;
+    }
+
+    // ✅ Verifica se JÁ EXISTE uma máquina com esse key + name (conectada ou não)
+    const existingMachines =
+      await this.machineRepository.getAllMachinesFromClientByKeyUser(key);
+    const duplicate = existingMachines.find((m) => m.name === name);
+
+    if (duplicate) {
+      // Se já existe, rejeita
+      console.warn(
+        `Máquina duplicada tentando conectar: ${name} (key: ${key})`
+      );
+      ws.send(
+        JSON.stringify({ error: "Máquina com este nome já está registrada." })
+      );
+      ws.close?.(1008, "Duplicate machine");
+      return;
+    }
+
     const machineInputDto: IMachineInputDto = {
-      key: data.key,
-      name: data.name,
+      key,
+      name,
       ws,
     };
 
-    if (data.name && data.key) {
-      console.log(machineInputDto);
-      await this.saveMachine.execute(machineInputDto);
-      ws.send(
-        JSON.stringify({ message: "Sua maquina está esperando usuario" })
-      );
+    console.log("Registrando máquina:", machineInputDto);
+    await this.saveMachine.execute(machineInputDto);
 
-      console.log(`Máquina conectada e registrada: ${data.name}`);
+    // ✅ Configura remoção automática ao desconectar
+    const onDisconnect = () => {
+      console.log(`Máquina desconectada e removida: ${name} (key: ${key})`);
+      this.machineRepository.delete(key, name).catch(console.error);
+    };
+
+    if ("onclose" in ws) {
+      ws.onclose = onDisconnect;
     } else {
-      console.error("Mensagem de máquina inválida.");
-      ws.send(JSON.stringify({ error: "Dados de máquina incompletos." }));
+      ws.addEventListener?.("close", onDisconnect);
     }
+
+    ws.send(JSON.stringify({ message: "Sua máquina está esperando usuario" }));
+    console.log(`Máquina conectada e registrada: ${name}`);
   }
 
   async getMachinesOfUserByKey(key: string) {

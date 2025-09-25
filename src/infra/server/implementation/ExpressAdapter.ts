@@ -142,51 +142,6 @@ export class ExpressAdapter implements IServerHttp {
     });
   };
 
-  private uploadAudio = multer({
-    dest: UPLOAD_DEST,
-    limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB
-    },
-    fileFilter: (req, file, cb) => {
-      const allowedMimeTypes = [
-        "audio/x-m4a",
-        "audio/mp4",
-        "audio/mpeg",
-        "audio/wav",
-        "audio/webm",
-      ];
-      if (!allowedMimeTypes.includes(file.mimetype)) {
-        return cb(
-          new multer.MulterError(
-            "LIMIT_UNEXPECTED_FILE",
-            "Apenas arquivos de áudio são permitidos."
-          )
-        );
-      }
-      cb(null, true);
-    },
-  });
-
-  public multerAudioMiddleware = (
-    expressReq: Request,
-    expressRes: Response,
-    expressNext: NextFunction
-  ) => {
-    const uploadHandler = this.uploadAudio.single("audio"); // 👈 Campo "audio"
-    uploadHandler(expressReq, expressRes, (err) => {
-      if (err instanceof multer.MulterError) {
-        return expressRes
-          .status(400)
-          .json({ message: "MulterError: " + err.message });
-      } else if (err) {
-        return expressRes
-          .status(500)
-          .json({ message: "Erro ao fazer upload do áudio" });
-      }
-      expressNext();
-    });
-  };
-
   registerFileUploadRouter(
     methodHTTP: HttpMethods,
     path: string,
