@@ -103,8 +103,8 @@ export class InMemoryDataAccess implements IDataAccess {
     const originalSize = collection.length;
 
     const keys = Object.keys(query);
-    const filteredCollection = collection.filter((item) =>
-      keys.some((key) => item[key] !== query[key])
+    const filteredCollection = collection.filter(
+      (item) => !keys.every((key) => item[key] === query[key])
     );
 
     this.data.set(collectionName, filteredCollection);

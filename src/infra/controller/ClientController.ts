@@ -17,6 +17,13 @@ export class ClientController {
     });
     this.server.registerRouter("post", "/message", this.sendMessage.bind(this));
   }
+  async clearMachinesOfUser(req: any, res: any) {
+    const { key } = req.headers;
+    if (!key) return res.send("<h1>UNAUTHORIZED</h1>");
+    await this.serviceMachines.clearMachinesByKeyUser(key);
+    res.send("machines cleaned");
+  }
+
   async sendMessage(req: any, res: any) {
     const { message, key, name } = req.body;
 

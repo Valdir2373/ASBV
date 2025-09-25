@@ -18,8 +18,6 @@ export class MachinesService {
     );
   }
 
-  // MachinesService.ts — substitua seu método handleMaquinaMessage por este:
-
   async handleMaquinaMessage(ws: IWS, data: IMachineMessage) {
     const { key, name } = data;
 
@@ -69,6 +67,17 @@ export class MachinesService {
 
     ws.send(JSON.stringify({ message: "Sua máquina está esperando usuario" }));
     console.log(`Máquina conectada e registrada: ${name}`);
+  }
+
+  async clearMachinesByKeyUser(key: string): Promise<void> {
+    const machines =
+      await this.machineRepository.getAllMachinesFromClientByKeyUser(key);
+
+    const deletePromises = machines.map((machine) =>
+      this.machineRepository.delete(key, machine.name)
+    );
+
+    await Promise.all(deletePromises);
   }
 
   async getMachinesOfUserByKey(key: string) {
