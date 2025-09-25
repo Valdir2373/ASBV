@@ -16,6 +16,11 @@ export class ClientController {
       res.json(machines);
     });
     this.server.registerRouter("post", "/message", this.sendMessage.bind(this));
+    this.server.registerRouter(
+      "get",
+      "/clear-machines",
+      this.clearMachinesOfUser.bind(this)
+    );
   }
   async clearMachinesOfUser(req: any, res: any) {
     const { key } = req.headers;
