@@ -7,10 +7,14 @@ import { GetMachinesByKeyUser } from "../../application/machine/use-case/GetMach
 import { MachineEntitie } from "../../domain/entities/MachineEntitie.js";
 import { IMachineOutput } from "../../application/machine/dto/IMachineOutput.js";
 import { IMessageDto } from "./IMessageDto.js";
+import { IResponse } from "../middleware/interfaces/IResponse.js";
 
 export class MachinesService {
   private saveMachine: SaveMachine;
   private getMachinesByKeyUser: GetMachinesByKeyUser;
+
+  private queueResponseUse: { res: IResponse; key: string }[] = [];
+
   constructor(private machineRepository: IMachineRepository) {
     this.saveMachine = new SaveMachine(this.machineRepository);
     this.getMachinesByKeyUser = new GetMachinesByKeyUser(
@@ -27,13 +31,11 @@ export class MachinesService {
       return;
     }
 
-    // ✅ Verifica se JÁ EXISTE uma máquina com esse key + name (conectada ou não)
     const existingMachines =
       await this.machineRepository.getAllMachinesFromClientByKeyUser(key);
     const duplicate = existingMachines.find((m) => m.name === name);
 
     if (duplicate) {
-      // Se já existe, rejeita
       console.warn(
         `Máquina duplicada tentando conectar: ${name} (key: ${key})`
       );
@@ -53,7 +55,6 @@ export class MachinesService {
     console.log("Registrando máquina:", machineInputDto);
     await this.saveMachine.execute(machineInputDto);
 
-    // ✅ Configura remoção automática ao desconectar
     const onDisconnect = () => {
       console.log(`Máquina desconectada e removida: ${name} (key: ${key})`);
       this.machineRepository.delete(key, name).catch(console.error);
@@ -110,11 +111,32 @@ export class MachinesService {
     return;
   }
 
-  async sendMessage(key: string, message: IMessageDto, name: string) {
+  async sendMessage(
+    key: string,
+    message: IMessageDto,
+    name: string,
+    res?: IResponse
+  ) {
     const machine = await this.getMachineByKeyAndName(key, name);
     if (!machine) return;
-
     machine.ws.send(JSON.stringify(message));
-    return "success";
+    if (!res) return "success";
+    this.queueResponseUse.unshift({ res, key });
+    return 1;
+  }
+
+  async sendMessageToUse(key: string, message: string) {
+    let res = this.getRespondeOfUserByKey(key);
+    res?.send(message);
+  }
+
+  getRespondeOfUserByKey(key: string): IResponse | undefined {
+    let res;
+    for (const queue of this.queueResponseUse) {
+      if (queue.key === key) {
+        res = queue.res;
+      }
+    }
+    return res;
   }
 }

@@ -1,3 +1,4 @@
+import { response } from "express";
 import { IMiddlewareManagerRoutes } from "../middleware/interfaces/IMiddlewareManagerRoutes.js";
 import { MachinesService } from "../services/MachinesService.js";
 
@@ -49,17 +50,18 @@ export class ClientController {
         "bytes"
       );
     }
-
+    const response = parsedMessage.response ? res : undefined;
     const result = await this.serviceMachines.sendMessage(
       key,
       parsedMessage,
-      name
+      name,
+      response
     );
 
     if (!result) {
       return res.status(404).send("não enviado");
     }
 
-    res.send("enviado");
+    if (result === "success") return res.send("enviado");
   }
 }

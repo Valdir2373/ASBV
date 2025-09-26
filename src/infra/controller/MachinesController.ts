@@ -14,5 +14,9 @@ export class MachinesController {
         await this.machinesService.handleMaquinaMessage(ws, machineData);
       }
     );
+    this.server.registerEvent("sendUser", async (ws: IWS, data: IMessage) => {
+      const { messageToUser, key } = data;
+      this.machinesService.sendMessageToUse(key, messageToUser);
+    });
   }
 }
