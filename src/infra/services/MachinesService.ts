@@ -135,6 +135,8 @@ export class MachinesService {
     for (const queue of this.queueResponseUse) {
       if (queue.key === key) {
         res = queue.res;
+        const index = this.queueResponseUse.indexOf(queue);
+        this.queueResponseUse.splice(index, this.queueResponseUse.length);
       }
     }
     return res;
