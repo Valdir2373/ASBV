@@ -9,11 +9,17 @@ import { IMachineOutput } from "../../application/machine/dto/IMachineOutput.js"
 import { IMessageDto } from "./IMessageDto.js";
 import { IResponse } from "../middleware/interfaces/IResponse.js";
 
+interface IQueueResponse {
+  res: IResponse;
+  key: string;
+  date: number;
+}
+
 export class MachinesService {
   private saveMachine: SaveMachine;
   private getMachinesByKeyUser: GetMachinesByKeyUser;
 
-  private queueResponseUse: { res: IResponse; key: string }[] = [];
+  private queueResponseUse: IQueueResponse[] = [];
 
   constructor(private machineRepository: IMachineRepository) {
     this.saveMachine = new SaveMachine(this.machineRepository);
@@ -119,18 +125,21 @@ export class MachinesService {
   ) {
     const machine = await this.getMachineByKeyAndName(key, name);
     if (!machine) return;
+    if (!res) {
+      machine.ws.send(JSON.stringify(message));
+      return "success";
+    }
     machine.ws.send(JSON.stringify(message));
-    if (!res) return "success";
-    this.queueResponseUse.unshift({ res, key });
+    this.saveResponseOnQueue({ res, key, date: Date.now() });
     return 1;
   }
 
   async sendMessageToUse(key: string, message: string) {
-    let res = this.getRespondeOfUserByKey(key);
+    let res = this.getResponseOfUserByKeyAndDelete(key);
     res?.send(message);
   }
 
-  getRespondeOfUserByKey(key: string): IResponse | undefined {
+  getResponseOfUserByKeyAndDelete(key: string): IResponse | undefined {
     let res;
     for (const queue of this.queueResponseUse) {
       if (queue.key === key) {
@@ -140,5 +149,10 @@ export class MachinesService {
       }
     }
     return res;
+  }
+
+  saveResponseOnQueue(queueToSave: IQueueResponse) {
+    this.getResponseOfUserByKeyAndDelete(queueToSave.key);
+    this.queueResponseUse.unshift(queueToSave);
   }
 }
